@@ -9,17 +9,10 @@
     "type": "git",
     "url": "git+https://github.com/oultrox/UnmaskForUGUI.git"
   },
-  "author": "mob-sakai <sakai861104@gmail.com> (https://github.com/mob-sakai)",
+  "author": "Oultrox <oultroxgmail.com> (https://github.com/oultrox)",
   "dependencies": {},
   "keywords": [
     "ui",
     "mask"
-  ],
-  "samples": [
-    {
-      "displayName": "Demo",
-      "description": "UI Unmask Demo",
-      "path": "Samples~/Demo"
-    }
   ]
 }
