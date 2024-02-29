@@ -24,9 +24,6 @@ Reverse mask for uGUI element in Unity.
 << [Description](#description) | [WebGL Demo](#demo) | [Installation](#installation) | [Usage](#usage) | [Contributing](#contributing) >>
 
 
-
-<br><br><br><br>
-
 ## Description
 
 Unmask provides the following features:
@@ -66,21 +63,13 @@ Unmask provides the following features:
 
 ![](https://img.shields.io/badge/Universal%20RP-supported-blue.svg)
 
-### Using OpenUPM
-
-This package is available on [OpenUPM](https://openupm.com).  
-You can install it via [openupm-cli](https://github.com/openupm/openupm-cli).
-```
-openupm add com.coffee.unmask
-```
-
 ### Using Git
 
 Find the manifest.json file in the Packages folder of your project and edit it to look like this:
 ```
 {
   "dependencies": {
-    "com.coffee.unmask": "https://github.com/oultrox/UnmaskForUGUI.git",
+    "com.oultrox.unmask": "https://github.com/oultrox/UnmaskForUGUI.git",
     ...
   },
 }
@@ -88,9 +77,7 @@ Find the manifest.json file in the Packages folder of your project and edit it t
 
 To update the package, change suffix `#{version}` to the target version.
 
-* e.g. `"com.coffee.unmask": "https://github.com/mob-sakai/UnmaskForUGUI.git#2.0.0",`
-
-Or, use [UpmGitExtension](https://github.com/mob-sakai/UpmGitExtension) to install and update the package.
+* e.g. `"com.oultrox.unmask": "https://github.com/oultrox/UnmaskForUGUI.git#2.0.0",`
 
 ### For Unity 2018.2 or earlier
 
@@ -100,23 +87,6 @@ Or, use [UpmGitExtension](https://github.com/mob-sakai/UpmGitExtension) to insta
    - `Packages` (It works as an embedded package. For Unity 2018.1 or later)
    - `Assets` (Legacy way. For Unity 2017.1 or later)
 
-
-
-<br><br><br><br>
-
-## How to play demo
-
-- For Unity 2019.1 or later
-  - Open `Package Manager` window and select `UI Unmask` package in package list and click `Demo > Import in project` button
-- For Unity 2018.4 or earlier
-  - Click `Assets/Samples/UI Unmask/Import Demo` from menu
-
-The assets will be imported into `Assets/Samples/UI Unmask/{version}/Demo`.  
-Open `UIUnmask_Demo` scene and play it.
-
-
-
-<br><br><br><br>
 
 ## Usage
 
@@ -170,17 +140,16 @@ If you like it, please support him.
 
 
 
-
-<br><br><br><br>
-
 ## License
 
 * MIT
-* © UTJ/UCL
+* © UTJ/UCL (Because of Unity-Chan lol)
 
 
 
 ## Author
+
+I just extended it. Real author:
 
 [mob-sakai](https://github.com/mob-sakai)
 [![](https://img.shields.io/twitter/follow/mob_sakai.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=mob_sakai) 
