@@ -80,7 +80,7 @@ Find the manifest.json file in the Packages folder of your project and edit it t
 ```
 {
   "dependencies": {
-    "com.coffee.unmask": "https://github.com/mob-sakai/UnmaskForUGUI.git",
+    "com.coffee.unmask": "https://github.com/oultrox/UnmaskForUGUI.git",
     ...
   },
 }
@@ -161,9 +161,9 @@ See [CONTRIBUTING.md](/../../blob/main/CONTRIBUTING.md) and [develop](https://gi
 
 ### Support
 
-This is an open source project that I am developing in my spare time.  
-If you like it, please support me.  
-With your support, I can spend more time on development. :)
+Project is not originally mine I just extended it if you wanna support the OG developer click on the following. 
+
+If you like it, please support him.
 
 [![](https://user-images.githubusercontent.com/12690315/50731629-3b18b480-11ad-11e9-8fad-4b13f27969c1.png)](https://www.patreon.com/join/2343451?)  
 [![](https://user-images.githubusercontent.com/12690315/66942881-03686280-f085-11e9-9586-fc0b6011029f.png)](https://github.com/users/mob-sakai/sponsorship)
