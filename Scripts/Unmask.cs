@@ -4,10 +4,10 @@ using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 
-namespace Coffee.UIExtensions
+namespace Oultrox.UIExtensions
 {
     /// <summary>
-    /// Reverse masking for parent Mask component.
+    /// Reverse masking for parent Mask component. Based on Coffee.UnMask solution.
     /// </summary>
     [ExecuteInEditMode]
     [AddComponentMenu("UI/Unmask/Unmask", 1)]
@@ -22,9 +22,14 @@ namespace Coffee.UIExtensions
         //################################
         // Serialize Members.
         //################################
-        [Tooltip("Fit graphic's transform to target transform.")]
+        [Header("Target Fit (It's one or another)")]
+        [Tooltip("Fit graphic's transform to target transform. Remember: it's either transform OR string name.")]
         [SerializeField] private RectTransform m_FitTarget;
 
+        [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        [SerializeField] private string m_FitTargetName;
+
+        [Header("Standard Properties")]
         [Tooltip("Fit graphic's transform to target transform on LateUpdate every frame.")]
         [SerializeField] private bool m_FitOnLateUpdate;
 
@@ -58,6 +63,19 @@ namespace Coffee.UIExtensions
             {
                 m_FitTarget = value;
                 FitTo(m_FitTarget);
+            }
+        }
+        
+        /// <summary>
+        /// Name of the object to fit the graphic's transform to.
+        /// </summary>
+        public string fitTargetName
+        {
+            get { return m_FitTargetName; }
+            set
+            {
+                m_FitTargetName = value;
+                FitTo(m_FitTargetName);
             }
         }
 
@@ -157,6 +175,22 @@ namespace Coffee.UIExtensions
             rt.sizeDelta = target.rect.size;
             rt.anchorMax = rt.anchorMin = s_Center;
         }
+        
+        /// <summary>
+        /// Fit to target transform.
+        /// </summary>
+        /// <param name="targetName">Name of the target object.</param>
+        private void FitTo(string targetName)
+        {
+            if (m_FitTarget != null) return;
+            var target = GameObject.Find(targetName);
+
+            if (target != null)
+            {
+                m_FitTarget = target.GetComponent<RectTransform>();
+                FitTo(m_FitTarget);
+            }
+        }
 
 
         //################################
@@ -170,10 +204,14 @@ namespace Coffee.UIExtensions
         /// This function is called when the object becomes enabled and active.
         /// </summary>
         private void OnEnable()
-        {
+        { 
             if (m_FitTarget)
             {
                 FitTo(m_FitTarget);
+            }
+            else if (!string.IsNullOrEmpty(m_FitTargetName))
+            {
+                FitTo(m_FitTargetName);
             }
             SetDirty();
         }
@@ -204,14 +242,29 @@ namespace Coffee.UIExtensions
         private void LateUpdate()
         {
 #if UNITY_EDITOR
-            if (m_FitTarget && (m_FitOnLateUpdate || !Application.isPlaying))
+            if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
-			if (m_FitTarget && m_FitOnLateUpdate)
+			if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && m_FitOnLateUpdate)
 #endif
             {
-                FitTo(m_FitTarget);
+                if (m_FitTarget)
+                {
+                    FitTo(m_FitTarget);
+                }
+                else if (!string.IsNullOrEmpty(m_FitTargetName))
+                {
+                    // Find the target transform by name and fit to it.
+                    GameObject targetObject = GameObject.Find(m_FitTargetName);
+                    if (targetObject != null)
+                    {
+                        RectTransform targetTransform = targetObject.GetComponent<RectTransform>();
+                        if (targetTransform != null)
+                        {
+                            FitTo(targetTransform);
+                        }
+                    }
+                }
             }
-
             Smoothing(graphic, m_EdgeSmoothing);
         }
 

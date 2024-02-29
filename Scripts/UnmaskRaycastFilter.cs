@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
-namespace Coffee.UIExtensions
+namespace Oultrox.UIExtensions
 {
     /// <summary>
     /// Unmask Raycast Filter.
-    /// The ray passes through the unmasked rectangle.
+    /// The ray passes through the unmasked rectangle. Based on Coffee.UnMask solution.
     /// </summary>
     [AddComponentMenu("UI/Unmask/UnmaskRaycastFilter", 2)]
     public class UnmaskRaycastFilter : MonoBehaviour, ICanvasRaycastFilter
@@ -12,41 +12,55 @@ namespace Coffee.UIExtensions
         //################################
         // Serialize Members.
         //################################
-        [Tooltip("Target unmask component. The ray passes through the unmasked rectangle.")]
-        [SerializeField] private Unmask m_TargetUnmask;
+        [Tooltip("Target unmask components. The ray passes through the unmasked rectangles.")]
+        [SerializeField] private Unmask[] m_TargetUnmasks = new Unmask[0];
 
 
         //################################
         // Public Members.
         //################################
         /// <summary>
-        /// Target unmask component. Ray through the unmasked rectangle.
+        /// Target unmask components. Ray through the unmasked rectangles.
         /// </summary>
-        public Unmask targetUnmask { get { return m_TargetUnmask; } set { m_TargetUnmask = value; } }
+        public Unmask[] targetUnmasks { get { return m_TargetUnmasks; } set { m_TargetUnmasks = value; } }
 
         /// <summary>
-        /// Given a point and a camera is the raycast valid.
+        /// Given a point and a camera, is the raycast valid.
         /// </summary>
         /// <returns>Valid.</returns>
         /// <param name="sp">Screen position.</param>
         /// <param name="eventCamera">Raycast camera.</param>
         public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
         {
-            // Skip if deactived.
-            if (!isActiveAndEnabled || !m_TargetUnmask || !m_TargetUnmask.isActiveAndEnabled)
+            // Skip if deactivated or no target unmask components.
+            if (!isActiveAndEnabled || m_TargetUnmasks == null || m_TargetUnmasks.Length == 0)
             {
                 return true;
             }
 
-            // check inside
-            if (eventCamera)
+            // Check inside for each Unmask component in the array.
+            foreach (Unmask targetUnmask in m_TargetUnmasks)
             {
-                return !RectTransformUtility.RectangleContainsScreenPoint((m_TargetUnmask.transform as RectTransform), sp, eventCamera);
+                if (targetUnmask && targetUnmask.isActiveAndEnabled)
+                {
+                    if (eventCamera)
+                    {
+                        if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp, eventCamera))
+                        {
+                            return false; // Raycast is not valid if inside any of the Unmask components.
+                        }
+                    }
+                    else
+                    {
+                        if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp))
+                        {
+                            return false; // Raycast is not valid if inside any of the Unmask components.
+                        }
+                    }
+                }
             }
-            else
-            {
-                return !RectTransformUtility.RectangleContainsScreenPoint((m_TargetUnmask.transform as RectTransform), sp);
-            }
+
+            return true; // Raycast is valid if not inside any of the Unmask components.
         }
 
 
@@ -59,6 +73,7 @@ namespace Coffee.UIExtensions
         /// </summary>
         void OnEnable()
         {
+            // Initialization code if needed.
         }
     }
 }

@@ -1,3 +1,8 @@
+
+## [1.4.4](https://github.com/mob-sakai/UnmaskForUGUI/compare/1.4.1...1.4.2) (2024-02-28)
+* Improved UnmaskRaycastFilter to take multiple blockers if needed.
+* Unmask now can track a fit target based on the name across the scenes if needed.
+
 ## [1.4.2](https://github.com/mob-sakai/UnmaskForUGUI/compare/1.4.1...1.4.2) (2023-10-25)
 
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 
-namespace Coffee.UIExtensions.Editors
+namespace Oultrox.UIExtensions.Editors
 {
     internal static class ImportSampleMenu_UIUnmask
     {

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Coffee.UIExtensions.Editors
+namespace Oultrox.UIExtensions.Editors
 {
     internal class MenuOptions_UIUnmask
     {
@@ -54,7 +54,9 @@ namespace Coffee.UIExtensions.Editors
             unmask.transform.SetParent(mask.transform);
             unmask.GetComponent<Image>().sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
-            mask.gameObject.AddComponent<UnmaskRaycastFilter>().targetUnmask = unmask;
+            var unmaskRaycastFilter = mask.gameObject.AddComponent<UnmaskRaycastFilter>();
+            unmaskRaycastFilter.targetUnmasks = new Unmask[1];
+            unmaskRaycastFilter.targetUnmasks[0] = unmask;
 
             var image = unmask.GetComponent<Image>();
             image.sprite = unmaskSprite;

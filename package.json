@@ -1,5 +1,5 @@
 {
-  "name": "com.coffee.unmask",
+  "name": "com.oultrox.unmask",
   "displayName": "UI Unmask",
   "description": "Reverse mask for uGUI element in Unity.",
   "version": "1.4.2",
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mob-sakai/UnmaskForUGUI.git"
+    "url": "git+https://github.com/oultrox/UnmaskForUGUI.git"
   },
   "author": "mob-sakai <sakai861104@gmail.com> (https://github.com/mob-sakai)",
   "dependencies": {},
