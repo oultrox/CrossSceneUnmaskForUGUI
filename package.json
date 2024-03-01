@@ -1,9 +1,9 @@
 {
   "name": "com.oultrox.unmask",
   "displayName": "UI Unmask",
-  "description": "Oultrox's extension of reverse mask for uGUI element in Unity.",
+  "description": "extension of reverse mask for uGUI element in Unity.",
   "version": "1.4.4",
-  "unity": "2020.3.44f1",
+  "unity": "2017.1",
   "license": "MIT",
   "repository": {
     "type": "git",
