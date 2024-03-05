@@ -26,8 +26,23 @@ namespace Oultrox.UIExtensions
         [Tooltip("Fit graphic's transform to target transform. Remember: it's either transform OR string name.")]
         [SerializeField] private RectTransform m_FitTarget;
 
+        [Header("Fit Target Via Cross Scene Feature  (It's one or another)")]
+        [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        [SerializeField] private Canvas m_OwnCanvas;
+        
+        [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        [SerializeField] private string m_FitCanvasName;
+        
         [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
         [SerializeField] private string m_FitTargetName;
+        
+        [Header("Fit Type")]
+        [SerializeField] private bool m_FitPosition = true;
+        [SerializeField] private bool m_FitSize = true;
+        
+        [Header("Offset Values")]
+        [SerializeField] private Vector2 sizeOffset = Vector2.zero;
+        [SerializeField] private Vector2 positionOffset = Vector2.zero;
 
         [Header("Standard Properties")]
         [Tooltip("Fit graphic's transform to target transform on LateUpdate every frame.")]
@@ -75,7 +90,26 @@ namespace Oultrox.UIExtensions
             set
             {
                 m_FitTargetName = value;
-                FitTo(m_FitTargetName);
+                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
+                {
+                    FitTo(m_FitCanvasName,m_FitTargetName);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Name of the object to fit the graphic's transform to.
+        /// </summary>
+        public string fitTargetCanvasName
+        {
+            get { return m_FitCanvasName; }
+            set
+            {
+                m_FitTargetName = value;
+                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
+                {
+                    FitTo(m_FitCanvasName,m_FitTargetName);
+                }
             }
         }
 
@@ -165,40 +199,133 @@ namespace Oultrox.UIExtensions
         {
             var rt = transform as RectTransform;
 
-            rt.pivot = target.pivot;
-            rt.position = target.position;
-            rt.rotation = target.rotation;
+            if (m_FitPosition)
+            {
+                rt.pivot = target.pivot;
+                rt.position = target.position;
+                rt.rotation = target.rotation;
+            }
 
-            var s1 = target.lossyScale;
-            var s2 = rt.parent.lossyScale;
-            rt.localScale = new Vector3(s1.x / s2.x, s1.y / s2.y, s1.z / s2.z);
-            rt.sizeDelta = target.rect.size;
-            rt.anchorMax = rt.anchorMin = s_Center;
+            if (m_FitSize)
+            {
+                var s1 = target.lossyScale;
+                var s2 = rt.parent.lossyScale;
+                rt.localScale = new Vector3(s1.x / s2.x, s1.y / s2.y, s1.z / s2.z);
+                rt.sizeDelta = target.rect.size;
+                rt.anchorMax = rt.anchorMin = s_Center;
+            }
         }
         
         /// <summary>
         /// Fit to target transform.
         /// </summary>
-        /// <param name="targetName">Name of the target object.</param>
-        private void FitTo(string targetName)
+        /// <param name="canvasName">Name of the Canvas where the target object lives.</param>
+        /// <param name="targetName">Name of the target object which can be inside the target.</param>
+        public void FitTo(string canvasName, string targetName)
         {
-            if (m_FitTarget != null) return;
-            var target = GameObject.Find(targetName);
-
-            if (target != null)
+            if (m_FitTarget != null)
             {
-                m_FitTarget = target.GetComponent<RectTransform>();
-                FitTo(m_FitTarget);
+                Debug.LogWarning("FitTarget already set.");
+                return;
             }
+
+            RectTransform rt = transform as RectTransform;
+            GameObject canvasObject = GameObject.Find(canvasName);
+            RectTransform target = GameObject.Find(targetName)?.GetComponent<RectTransform>();
+
+            if (canvasObject == null)
+            {
+                Debug.LogWarning($"Canvas with name {canvasName} not found.");
+                return;
+            }
+
+            if (target == null)
+            {
+                Debug.LogWarning($"Target object with name {targetName} not found.");
+                return;
+            }
+
+            if (m_OwnCanvas == null)
+            {
+                Debug.LogWarning($"Own Canvas object not found.");
+                return;
+            }
+
+            // Get the canvases
+            Canvas targetCanvas = canvasObject.GetComponent<Canvas>();
+
+            // Check if the target and current canvases exist
+            if (targetCanvas == null || m_OwnCanvas == null || rt == null)
+            {
+                Debug.LogWarning("Target or current Canvas not found.");
+                return;
+            }
+
+            ConvertRelativePosition(targetCanvas, target, rt);
+            ConvertRelativeDimensionSize(targetCanvas, rt, target);
         }
-
-
+        
+        
         //################################
         // Private Members.
         //################################
         private Material _unmaskMaterial;
         private Material _revertUnmaskMaterial;
         private MaskableGraphic _graphic;
+        
+        private void ConvertRelativePosition(Canvas targetCanvas, RectTransform target, RectTransform rt)
+        {
+            if (!m_FitPosition) return;
+
+            // Convert target position to local canvas space
+            Vector2 localPosition = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(m_OwnCanvas.transform as RectTransform, localPosition,
+                m_OwnCanvas.worldCamera, out localPosition);
+
+            // Apply adjustments to Unmask RectTransform
+            rt.localPosition = localPosition;
+            rt.rotation = target.rotation;
+        }
+        
+        private void ConvertRelativeDimensionSize(Canvas targetCanvas, RectTransform rt, RectTransform target)
+        {
+            if (!m_FitSize) return;
+
+            float ownCanvasScaleFactor = m_OwnCanvas.GetComponent<CanvasScaler>().scaleFactor;
+            float targetCanvasScaleFactor = targetCanvas.GetComponent<CanvasScaler>().scaleFactor;
+
+            // Calculate relative scale factors
+            float relativeScaleX = targetCanvasScaleFactor / ownCanvasScaleFactor;
+            float relativeScaleY = targetCanvasScaleFactor / ownCanvasScaleFactor;
+
+            // Apply relative scale adjustments
+            rt.localScale = new Vector3(
+                target.localScale.x * relativeScaleX,
+                target.localScale.y * relativeScaleY,
+                target.localScale.z
+            );
+
+            // Calculate the sizeDelta based on the target's rect and the relative scale factors
+            Vector2 targetSizeDelta = target.rect.size;
+
+            // For both Overlay and Camera modes, convert target position to screen space and then to local canvas space
+            Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                m_OwnCanvas.transform as RectTransform, screenPos, m_OwnCanvas.worldCamera, out Vector2 localPos);
+
+            // Set sizeDelta based on the target's rect and the relative scale factors
+            rt.sizeDelta = new Vector2(
+                targetSizeDelta.x / (ownCanvasScaleFactor / targetCanvasScaleFactor),
+                targetSizeDelta.y / (ownCanvasScaleFactor / targetCanvasScaleFactor)
+            );
+
+            rt.localPosition = localPos;
+
+            rt.sizeDelta += sizeOffset; // Apply size offset
+            rt.anchorMax = rt.anchorMin = target.pivot;
+        }
+
+
 
         /// <summary>
         /// This function is called when the object becomes enabled and active.
@@ -211,7 +338,7 @@ namespace Oultrox.UIExtensions
             }
             else if (!string.IsNullOrEmpty(m_FitTargetName))
             {
-                FitTo(m_FitTargetName);
+                FitTo(m_FitCanvasName,m_FitTargetName);
             }
             SetDirty();
         }
@@ -242,7 +369,7 @@ namespace Oultrox.UIExtensions
         private void LateUpdate()
         {
 #if UNITY_EDITOR
-            if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && (m_FitOnLateUpdate || !Application.isPlaying))
+            if ((m_FitTarget || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))) && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
 			if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && m_FitOnLateUpdate)
 #endif
@@ -251,18 +378,9 @@ namespace Oultrox.UIExtensions
                 {
                     FitTo(m_FitTarget);
                 }
-                else if (!string.IsNullOrEmpty(m_FitTargetName))
+                else if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
                 {
-                    // Find the target transform by name and fit to it.
-                    GameObject targetObject = GameObject.Find(m_FitTargetName);
-                    if (targetObject != null)
-                    {
-                        RectTransform targetTransform = targetObject.GetComponent<RectTransform>();
-                        if (targetTransform != null)
-                        {
-                            FitTo(targetTransform);
-                        }
-                    }
+                    FitTo(m_FitCanvasName,m_FitTargetName);
                 }
             }
             Smoothing(graphic, m_EdgeSmoothing);
