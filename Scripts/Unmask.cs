@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 
@@ -17,7 +18,7 @@ namespace Oultrox.UIExtensions
         // Constant or Static Members.
         //################################
         private static readonly Vector2 s_Center = new Vector2(0.5f, 0.5f);
-
+        private Canvas m_OwnCanvas;
 
         //################################
         // Serialize Members.
@@ -26,12 +27,10 @@ namespace Oultrox.UIExtensions
         [Tooltip("Fit graphic's transform to target transform. Remember: it's either transform OR string name.")]
         [SerializeField] private RectTransform m_FitTarget;
 
+        [FormerlySerializedAs("m_FitCanvasName")]
         [Header("Fit Target Via Cross Scene Feature  (It's one or another)")]
         [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
-        [SerializeField] private Canvas m_OwnCanvas;
-        
-        [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
-        [SerializeField] private string m_FitCanvasName;
+        [SerializeField] private string m_FitTargetCanvasName;
         
         [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
         [SerializeField] private string m_FitTargetName;
@@ -57,6 +56,9 @@ namespace Oultrox.UIExtensions
         [Tooltip("Edge smoothing.")]
         [Range(0f, 1f)]
         [SerializeField] private float m_EdgeSmoothing = 0f;
+
+        [Tooltip("Shows console logs for targets.")]
+        [SerializeField] private bool m_isDebugMode = false;
 
 
 
@@ -90,9 +92,9 @@ namespace Oultrox.UIExtensions
             set
             {
                 m_FitTargetName = value;
-                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
+                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
                 {
-                    FitTo(m_FitCanvasName,m_FitTargetName);
+                    FitTo(m_FitTargetCanvasName,m_FitTargetName);
                 }
             }
         }
@@ -100,15 +102,15 @@ namespace Oultrox.UIExtensions
         /// <summary>
         /// Name of the object to fit the graphic's transform to.
         /// </summary>
-        public string fitTargetCanvasName
+        public string FitTargetTargetCanvasName
         {
-            get { return m_FitCanvasName; }
+            get { return m_FitTargetCanvasName; }
             set
             {
                 m_FitTargetName = value;
-                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
+                if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
                 {
-                    FitTo(m_FitCanvasName,m_FitTargetName);
+                    FitTo(m_FitTargetCanvasName,m_FitTargetName);
                 }
             }
         }
@@ -225,6 +227,7 @@ namespace Oultrox.UIExtensions
         {
             if (m_FitTarget != null)
             {
+                if(!m_isDebugMode) return;
                 Debug.LogWarning("FitTarget already set.");
                 return;
             }
@@ -235,18 +238,21 @@ namespace Oultrox.UIExtensions
 
             if (canvasObject == null)
             {
+                if(!m_isDebugMode) return;
                 Debug.LogWarning($"Canvas with name {canvasName} not found.");
                 return;
             }
 
             if (target == null)
             {
+                if(!m_isDebugMode) return;
                 Debug.LogWarning($"Target object with name {targetName} not found.");
                 return;
             }
 
             if (m_OwnCanvas == null)
             {
+                if(!m_isDebugMode) return;
                 Debug.LogWarning($"Own Canvas object not found.");
                 return;
             }
@@ -257,6 +263,7 @@ namespace Oultrox.UIExtensions
             // Check if the target and current canvases exist
             if (targetCanvas == null || m_OwnCanvas == null || rt == null)
             {
+                if(!m_isDebugMode) return;
                 Debug.LogWarning("Target or current Canvas not found.");
                 return;
             }
@@ -332,13 +339,15 @@ namespace Oultrox.UIExtensions
         /// </summary>
         private void OnEnable()
         { 
+            // Search for the nearest Canvas component in the parent hierarchy
+            m_OwnCanvas = transform.GetComponentInParent<Canvas>();
             if (m_FitTarget)
             {
                 FitTo(m_FitTarget);
             }
             else if (!string.IsNullOrEmpty(m_FitTargetName))
             {
-                FitTo(m_FitCanvasName,m_FitTargetName);
+                FitTo(m_FitTargetCanvasName,m_FitTargetName);
             }
             SetDirty();
         }
@@ -369,7 +378,7 @@ namespace Oultrox.UIExtensions
         private void LateUpdate()
         {
 #if UNITY_EDITOR
-            if ((m_FitTarget || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))) && (m_FitOnLateUpdate || !Application.isPlaying))
+            if ((m_FitTarget || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))) && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
 			if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && m_FitOnLateUpdate)
 #endif
@@ -378,9 +387,9 @@ namespace Oultrox.UIExtensions
                 {
                     FitTo(m_FitTarget);
                 }
-                else if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitCanvasName))
+                else if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
                 {
-                    FitTo(m_FitCanvasName,m_FitTargetName);
+                    FitTo(m_FitTargetCanvasName,m_FitTargetName);
                 }
             }
             Smoothing(graphic, m_EdgeSmoothing);
