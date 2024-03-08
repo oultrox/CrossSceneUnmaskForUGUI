@@ -1,11 +1,8 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Oultrox.UIExtensions
 {
-    /// <summary>
-    /// Unmask Raycast Filter.
-    /// The ray passes through the unmasked rectangle. Based on Coffee.UnMask solution.
-    /// </summary>
     [AddComponentMenu("UI/Unmask/UnmaskRaycastFilter", 2)]
     public class UnmaskRaycastFilter : MonoBehaviour, ICanvasRaycastFilter
     {
@@ -14,8 +11,11 @@ namespace Oultrox.UIExtensions
         //################################
         [Tooltip("Target unmask components. The ray passes through the unmasked rectangles.")]
         [SerializeField] private Unmask[] m_TargetUnmasks = new Unmask[0];
-
-
+        bool _hasProcessedTouch;
+        Unmask _lastTouchedUnmask;
+        Action _processedTouchEvent;
+        
+        
         //################################
         // Public Members.
         //################################
@@ -23,6 +23,24 @@ namespace Oultrox.UIExtensions
         /// Target unmask components. Ray through the unmasked rectangles.
         /// </summary>
         public Unmask[] targetUnmasks { get { return m_TargetUnmasks; } set { m_TargetUnmasks = value; } }
+
+        
+        /// <summary>
+        /// Assign Callback touch event for any creative means. This will get invoked once per unmask touch.
+        /// </summary>
+        /// <param name="callback">Invoke Callback.</param>
+        public void AssignTouchUnmaskCallback(Action callback)
+        {
+            _processedTouchEvent = callback;
+        }
+        
+        /// <summary>
+        /// Clear all touch unmask once callbacks.
+        /// </summary>
+        public void ClearTouchUnmaskCallback()
+        {
+            _processedTouchEvent = null;
+        }
 
         /// <summary>
         /// Given a point and a camera, is the raycast valid.
@@ -32,13 +50,13 @@ namespace Oultrox.UIExtensions
         /// <param name="eventCamera">Raycast camera.</param>
         public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
         {
-            // Skip if deactivated or no target unmask components.
             if (!isActiveAndEnabled || m_TargetUnmasks == null || m_TargetUnmasks.Length == 0)
             {
+                // Reset the flag when not processing raycast
+                _hasProcessedTouch = false;
                 return true;
             }
 
-            // Check inside for each Unmask component in the array.
             foreach (Unmask targetUnmask in m_TargetUnmasks)
             {
                 if (targetUnmask && targetUnmask.isActiveAndEnabled)
@@ -47,6 +65,16 @@ namespace Oultrox.UIExtensions
                     {
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp, eventCamera))
                         {
+                            // Trigger the event only if it hasn't been processed in the current frame
+                            if (!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask)
+                            {
+                                _hasProcessedTouch = true;
+                                _processedTouchEvent?.Invoke();
+                            }
+
+                            // Update the last touched Unmask
+                            _lastTouchedUnmask = targetUnmask;
+
                             return false; // Raycast is not valid if inside any of the Unmask components.
                         }
                     }
@@ -54,26 +82,43 @@ namespace Oultrox.UIExtensions
                     {
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp))
                         {
+                            // Trigger the event only if it hasn't been processed in the current frame
+                            if (!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask)
+                            {
+                                _hasProcessedTouch = true;
+                                _processedTouchEvent?.Invoke();
+                            }
+
+                            // Update the last touched Unmask
+                            _lastTouchedUnmask = targetUnmask;
+
                             return false; // Raycast is not valid if inside any of the Unmask components.
                         }
                     }
                 }
             }
 
+            // Reset the flag when not inside any Unmask component
+            _hasProcessedTouch = false;
+
+            // Clear the last touched Unmask when not inside any Unmask component
+            _lastTouchedUnmask = null;
+
             return true; // Raycast is valid if not inside any of the Unmask components.
         }
-
-
+        
         //################################
         // Private Members.
         //################################
-
-        /// <summary>
-        /// This function is called when the object becomes enabled and active.
-        /// </summary>
         void OnEnable()
         {
-            // Initialization code if needed.
+            // Reset the flag when the object becomes enabled
+            _hasProcessedTouch = false;
+        }
+
+        void OnDisable()
+        {
+            ClearTouchUnmaskCallback();
         }
     }
 }

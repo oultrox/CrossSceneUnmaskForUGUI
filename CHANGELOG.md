@@ -1,3 +1,7 @@
+## [1.4.6](https://github.com/mob-sakai/UnmaskForUGUI/compare/1.4.1...1.4.2) (2024-03-07)
+* Added invoke callback property for us to call any delegate if a unmask component was touched.
+
+
 ## [1.4.5](https://github.com/mob-sakai/UnmaskForUGUI/compare/1.4.1...1.4.2) (2024-03-07)
 * Added debug log mode.
 * For cross-scene dynamic target finding with target name canvas and target fit name object, now the Unmask component searches for it's own parent canvas for the calculation of the target fit.
