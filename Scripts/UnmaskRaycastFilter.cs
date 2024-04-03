@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Oultrox.UIExtensions
@@ -56,7 +56,9 @@ namespace Oultrox.UIExtensions
                 _hasProcessedTouch = false;
                 return true;
             }
-
+            
+            var isTouchEnded = (Input.GetMouseButtonUp(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended));
+            
             foreach (Unmask targetUnmask in m_TargetUnmasks)
             {
                 if (targetUnmask && targetUnmask.isActiveAndEnabled)
@@ -66,7 +68,7 @@ namespace Oultrox.UIExtensions
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp, eventCamera))
                         {
                             // Trigger the event only if it hasn't been processed in the current frame
-                            if (!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask)
+                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded)
                             {
                                 _hasProcessedTouch = true;
                                 _processedTouchEvent?.Invoke();
@@ -83,7 +85,7 @@ namespace Oultrox.UIExtensions
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp))
                         {
                             // Trigger the event only if it hasn't been processed in the current frame
-                            if (!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask)
+                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded)
                             {
                                 _hasProcessedTouch = true;
                                 _processedTouchEvent?.Invoke();
