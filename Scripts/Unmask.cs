@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 
@@ -25,30 +26,31 @@ namespace Oultrox.UIExtensions
     // Serialize Members.
     //################################
     
+    [FormerlySerializedAs("m_FitTarget")]
     [Header("Same Scene Canvas Target Fit (Choose 1 Fit style)")]
-    [Tooltip("Fit graphic's transform to target transform. Remember: it's either transform OR string name.")]
+    [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to.")]
     [SerializeField]
-    private RectTransform m_FitTarget;
+    private string m_SameSceneFitTargetName;
     
     [Header("Fit Canvas Target Via Cross Scene Feature (Choose 1 Fit style)")]
     [Tooltip(
-        "Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        "Name of the (UNIQUE) GameObject's Canvas to fit the graphic's transform to.")]
     [SerializeField]
     private string m_FitTargetCanvasName;
 
     [Tooltip(
-        "Name of the (UNIQUE) GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        "Name of the (UNIQUE) GameObject to fit the graphic's transform to.")]
     [SerializeField]
     private string m_FitTargetName;
     
     [Header("Fit Non-Canvas Target Via Cross Scene Feature (Choose 1 Fit style)")]
     [Tooltip(
-        "Name of the (UNIQUE) 3D GameObject to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        "Name of the (UNIQUE) 3D GameObject to fit the graphic's transform to.")]
     [SerializeField]
     string m_FitNonCanvasTargetName;
     
     [Tooltip(
-        "Name of the (UNIQUE) Camera to fit the graphic's transform to. Remember: it's either transform OR string name.")]
+        "Name of the (UNIQUE) Camera to fit the graphic's transform to.")]
     [SerializeField] string m_FitNonCanvasTargetCameraName;
 
     [Header("Fit Type")] 
@@ -93,13 +95,13 @@ namespace Oultrox.UIExtensions
     /// <summary>
     /// Fit graphic's transform to target transform.
     /// </summary>
-    public RectTransform fitTarget
+    public string SameSceneFitTargetName
     {
-        get { return m_FitTarget; }
+        get { return m_SameSceneFitTargetName; }
         set
         {
-            m_FitTarget = value;
-            FitTo(m_FitTarget);
+            m_SameSceneFitTargetName = value;
+            FitTo(m_SameSceneFitTargetName);
         }
     }
 
@@ -221,12 +223,12 @@ namespace Oultrox.UIExtensions
     }
 
     /// <summary>
-    /// Fit to target transform.
+    /// Fit to target transform same scene.
     /// </summary>
-    /// <param name="target">Target transform.</param>
-    public void FitTo(RectTransform target)
+    /// <param name="targetName">Target transform.</param>
+    public void FitTo(string targetName)
     {
-        if ((string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)) ||
+        if ((!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)) ||
             (!string.IsNullOrEmpty(m_FitNonCanvasTargetName) && !string.IsNullOrEmpty(m_FitNonCanvasTargetCameraName)))
         {
             if (!m_isDebugMode) return;
@@ -241,7 +243,16 @@ namespace Oultrox.UIExtensions
         rt.anchorMax = anchorsAndPivotVector;
         rt.anchorMin = anchorsAndPivotVector;
         rt.pivot = anchorsAndPivotVector;
-
+        
+        RectTransform target = GameObject.Find(targetName)?.GetComponent<RectTransform>();
+        
+        if (target == null)
+        {
+            if (!m_isDebugMode) return;
+            Debug.LogWarning($"Target object with name {targetName} not found.");
+            return;
+        }
+        
         if (m_FitPosition)
         {
             rt.pivot = target.pivot;
@@ -266,8 +277,7 @@ namespace Oultrox.UIExtensions
     /// <param name="targetName">Name of the target object which can be inside the target.</param>
     public void FitTo(string canvasName, string targetName)
     {
-        if (m_FitTarget != null ||
-            (!string.IsNullOrEmpty(m_FitNonCanvasTargetName) && !string.IsNullOrEmpty(m_FitNonCanvasTargetCameraName)))
+        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitNonCanvasTargetName) && !string.IsNullOrEmpty(m_FitNonCanvasTargetCameraName)))
         {
             if (!m_isDebugMode) return;
             Debug.LogWarning("Another Fit already set.");
@@ -328,8 +338,7 @@ namespace Oultrox.UIExtensions
     /// <param name="cameraGameObjectName"> String name of Main Camera GameObject in other scene</param>
     public void FitTo3DObject(string targetGameObjectName, string cameraGameObjectName)
     {
-        if (m_FitTarget != null ||
-            (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)))
+        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)))
         {
             if (!m_isDebugMode) return;
             Debug.LogWarning("Another Fit already set.");
@@ -517,9 +526,9 @@ namespace Oultrox.UIExtensions
         // Search for the nearest Canvas component in the parent hierarchy
         m_OwnCanvas = transform.GetComponentInParent<Canvas>();
         m_OwnCanvasScaler = m_OwnCanvas.GetComponent<CanvasScaler>();
-        if (m_FitTarget)
+        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
         {
-            FitTo(m_FitTarget);
+            FitTo(m_SameSceneFitTargetName);
         }
         else if (!string.IsNullOrEmpty(m_FitTargetName))
         {
@@ -560,16 +569,15 @@ namespace Oultrox.UIExtensions
     private void LateUpdate()
     {
 #if UNITY_EDITOR
-        if ((m_FitTarget || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))) &&
-            (m_FitOnLateUpdate || !Application.isPlaying) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName) && (m_FitOnLateUpdate ||
-             !Application.isPlaying))
+        if ((!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName)) 
+            && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
-			if ((m_FitTarget || !string.IsNullOrEmpty(m_FitTargetName)) && m_FitOnLateUpdate || !string.IsNullOrEmpty(m_Fit3DTargetName) &&m_FitOnLateUpdate)
+			if ((!string.IsNullOrEmpty(m_FitTarget) || !string.IsNullOrEmpty(m_FitTargetName) || !string.IsNullOrEmpty(m_Fit3DTargetName)) && m_FitOnLateUpdate)
 #endif
         {
-            if (m_FitTarget)
+            if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
             {
-                FitTo(m_FitTarget);
+                FitTo(m_SameSceneFitTargetName);
             }
             else if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
             {

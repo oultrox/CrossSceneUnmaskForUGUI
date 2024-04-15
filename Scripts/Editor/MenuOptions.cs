@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,7 +20,7 @@ namespace Oultrox.UIExtensions.Editors
 
             var unmaskedPanel = CreateUnmaskedPanel(AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"), Image.Type.Sliced);
             var unmask = unmaskedPanel.GetComponentInChildren<Unmask>();
-            unmask.fitTarget = button.transform as RectTransform;
+            unmask.SameSceneFitTargetName = button.name;
             unmask.fitOnLateUpdate = true;
 
             Selection.activeGameObject = button.gameObject;
