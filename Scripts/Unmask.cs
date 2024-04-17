@@ -572,7 +572,7 @@ namespace Oultrox.UIExtensions
         if ((!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName)) 
             && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
-			if ((!string.IsNullOrEmpty(m_FitTarget) || !string.IsNullOrEmpty(m_FitTargetName) || !string.IsNullOrEmpty(m_Fit3DTargetName)) && m_FitOnLateUpdate)
+			if ((!string.IsNullOrEmpty(m_SameSceneFitTargetName) || !string.IsNullOrEmpty(m_FitTargetName) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName)) && m_FitOnLateUpdate)
 #endif
         {
             if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
