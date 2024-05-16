@@ -386,12 +386,19 @@ namespace Oultrox.UIExtensions
 
         // Convert target position to local canvas space
         Vector2 localPosition = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
+        
         RectTransformUtility.ScreenPointToLocalPointInRectangle(m_OwnCanvas.transform as RectTransform, localPosition,
             m_OwnCanvas.worldCamera, out localPosition);
-
-        // Apply adjustments to Unmask RectTransform
-        unmaskRectTransform.localPosition = localPosition;
-        unmaskRectTransform.rotation = target.rotation;
+        
+        if (targetCanvas.renderMode == RenderMode.WorldSpace)
+        {
+            unmaskRectTransform.anchoredPosition  = localPosition;
+        }
+        else
+        {
+            unmaskRectTransform.localPosition = localPosition;
+            unmaskRectTransform.rotation = target.rotation;
+        }
     }
 
     private void ConvertRelativePosition(Rect target, RectTransform unmaskRectTransform)
