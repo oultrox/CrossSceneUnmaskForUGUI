@@ -79,11 +79,17 @@ namespace Oultrox.UIExtensions
     [Tooltip("Shows console logs for targets.")] [SerializeField]
     private bool m_isDebugMode = false;
 
-
+    GameObject m_UnmaskTarget;
 
     //################################
     // Public Members.
     //################################
+
+    /// <summary>
+    /// The target GameObject for the cutout
+    /// </summary>
+    public GameObject unmaskTarget => m_UnmaskTarget;
+    
     /// <summary>
     /// The graphic associated with the unmask.
     /// </summary>
@@ -236,15 +242,20 @@ namespace Oultrox.UIExtensions
             return;
         }
         
-        m_OwnCanvasScaler.matchWidthOrHeight = 0.5f;
+        if (m_OwnCanvasScaler != null)
+        {
+            m_OwnCanvasScaler.matchWidthOrHeight = 0.5f;
+        }
         
         var rt = transform as RectTransform;
         var anchorsAndPivotVector = new Vector2(0.5f, 0.5f);
         rt.anchorMax = anchorsAndPivotVector;
         rt.anchorMin = anchorsAndPivotVector;
         rt.pivot = anchorsAndPivotVector;
+
+        m_UnmaskTarget = GameObject.Find(targetName);
         
-        RectTransform target = GameObject.Find(targetName)?.GetComponent<RectTransform>();
+        RectTransform target = m_UnmaskTarget?.GetComponent<RectTransform>();
         
         if (target == null)
         {
@@ -256,7 +267,9 @@ namespace Oultrox.UIExtensions
         if (m_FitPosition)
         {
             rt.pivot = target.pivot;
-            rt.position = target.position;
+            Vector3 unmaskPosition = target.position;
+            unmaskPosition += (Vector3)positionOffset;
+            rt.position = unmaskPosition;
             rt.rotation = target.rotation;
         }
 
@@ -266,6 +279,7 @@ namespace Oultrox.UIExtensions
             var s2 = rt.parent.lossyScale;
             rt.localScale = new Vector3(s1.x / s2.x, s1.y / s2.y, s1.z / s2.z);
             rt.sizeDelta = target.rect.size;
+            rt.sizeDelta += sizeOffset; // Apply size offset
             rt.anchorMax = rt.anchorMin = s_Center;
         }
     }
@@ -283,8 +297,11 @@ namespace Oultrox.UIExtensions
             Debug.LogWarning("Another Fit already set.");
             return;
         }
-        
-        m_OwnCanvasScaler.matchWidthOrHeight = 0.5f;
+
+        if (m_OwnCanvasScaler != null)
+        {
+            m_OwnCanvasScaler.matchWidthOrHeight = 0.5f;
+        }
 
         RectTransform rt = transform as RectTransform;
         var anchorsAndPivotVector = new Vector2(0.5f, 0.5f);
@@ -293,7 +310,10 @@ namespace Oultrox.UIExtensions
         rt.pivot = anchorsAndPivotVector;
         
         GameObject canvasObject = GameObject.Find(canvasName);
-        RectTransform target = GameObject.Find(targetName)?.GetComponent<RectTransform>();
+        
+        m_UnmaskTarget = GameObject.Find(targetName);
+        
+        RectTransform target = m_UnmaskTarget?.GetComponent<RectTransform>();
 
         if (canvasObject == null)
         {
@@ -353,17 +373,19 @@ namespace Oultrox.UIExtensions
         unmaskRectTransform.pivot = Vector2.zero;
 
         // Find the transform GameObject and Camera in the other scene
-        var transformGameObject = GameObject.Find(targetGameObjectName);
-        var targetCamera = GameObject.Find(cameraGameObjectName).GetComponent<Camera>();
+        m_UnmaskTarget = GameObject.Find(targetGameObjectName);
+        
+        var transformGameObject = m_UnmaskTarget;
+        var targetCamera = GameObject.Find(cameraGameObjectName)?.GetComponent<Camera>();
         if (transformGameObject == null)
         {
-            Debug.LogError("Transform GameObject not found in the other scene.");
+            Debug.LogWarning("Transform GameObject not found in the other scene.");
             return;
         }
 
         if (targetCamera == null)
         {
-            Debug.LogError("Camera not found in the other scene.");
+            Debug.LogWarning("Camera not found in the other scene.");
             return;
         }
 
@@ -392,11 +414,13 @@ namespace Oultrox.UIExtensions
         
         if (targetCanvas.renderMode == RenderMode.WorldSpace)
         {
-            unmaskRectTransform.anchoredPosition  = localPosition;
+            unmaskRectTransform.anchoredPosition = localPosition;
         }
         else
         {
-            unmaskRectTransform.localPosition = localPosition;
+            Vector3 unmaskPosition = localPosition;
+            unmaskPosition += (Vector3)positionOffset;
+            unmaskRectTransform.localPosition = unmaskPosition;
             unmaskRectTransform.rotation = target.rotation;
         }
     }
@@ -532,7 +556,11 @@ namespace Oultrox.UIExtensions
     {
         // Search for the nearest Canvas component in the parent hierarchy
         m_OwnCanvas = transform.GetComponentInParent<Canvas>();
-        m_OwnCanvasScaler = m_OwnCanvas.GetComponent<CanvasScaler>();
+        if (m_OwnCanvas != null)
+        {
+            m_OwnCanvasScaler = m_OwnCanvas.GetComponent<CanvasScaler>();
+        }
+        
         if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
         {
             FitTo(m_SameSceneFitTargetName);
