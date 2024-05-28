@@ -1,7 +1,7 @@
 Unmask For UGUI
 ===
 
-Reverse mask for uGUI element in Unity.
+Cross-Scene Featured Reverse mask for uGUI element in Unity3D.
 
 ![](https://user-images.githubusercontent.com/12690315/51747120-e1d8dc80-20eb-11e9-952e-a67915af1294.png)
 
