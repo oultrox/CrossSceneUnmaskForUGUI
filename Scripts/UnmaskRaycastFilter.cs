@@ -13,6 +13,7 @@ namespace Oultrox.UIExtensions
         [SerializeField] private Unmask[] m_TargetUnmasks = new Unmask[0];
         bool _hasProcessedTouch;
         Unmask _lastTouchedUnmask;
+        Unmask _highlightUnmask => targetUnmasks.Length > 0 ? targetUnmasks[0] : null;
         Action _processedTouchEvent;
         
         
@@ -23,6 +24,7 @@ namespace Oultrox.UIExtensions
         /// Target unmask components. Ray through the unmasked rectangles.
         /// </summary>
         public Unmask[] targetUnmasks { get { return m_TargetUnmasks; } set { m_TargetUnmasks = value; } }
+        public GameObject unmaskTarget => _highlightUnmask != null ? _highlightUnmask.unmaskTarget : null;
 
         
         /// <summary>
