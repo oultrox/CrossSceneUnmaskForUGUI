@@ -25,6 +25,7 @@ namespace Oultrox.UIExtensions
         /// </summary>
         public Unmask[] targetUnmasks { get { return m_TargetUnmasks; } set { m_TargetUnmasks = value; } }
         public GameObject unmaskTarget => _highlightUnmask != null ? _highlightUnmask.unmaskTarget : null;
+        public Unmask callbackIgnoreTarget;
 
         
         /// <summary>
@@ -70,7 +71,7 @@ namespace Oultrox.UIExtensions
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp, eventCamera))
                         {
                             // Trigger the event only if it hasn't been processed in the current frame
-                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded)
+                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded && targetUnmask != callbackIgnoreTarget)
                             {
                                 _hasProcessedTouch = true;
                                 _processedTouchEvent?.Invoke();
@@ -87,7 +88,7 @@ namespace Oultrox.UIExtensions
                         if (RectTransformUtility.RectangleContainsScreenPoint((targetUnmask.transform as RectTransform), sp))
                         {
                             // Trigger the event only if it hasn't been processed in the current frame
-                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded)
+                            if ((!_hasProcessedTouch || _lastTouchedUnmask != targetUnmask) && isTouchEnded && targetUnmask != callbackIgnoreTarget)
                             {
                                 _hasProcessedTouch = true;
                                 _processedTouchEvent?.Invoke();
