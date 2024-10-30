@@ -418,11 +418,26 @@ namespace Oultrox.UIExtensions
     {
         if (!m_FitPosition) return;
 
-        // Convert target position to local canvas space
-        Vector2 localPosition = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
+        Vector2 localPosition;
         
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(m_OwnCanvas.transform as RectTransform, localPosition,
-            m_OwnCanvas.worldCamera, out localPosition);
+        if (targetCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            // Convert to screen space directly, then to local space on m_OwnCanvas
+            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(null, target.position);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                m_OwnCanvas.transform as RectTransform, screenPosition,
+                m_OwnCanvas.worldCamera, 
+                out localPosition
+            );
+        }
+        else
+        {
+            // Convert target position to local canvas space
+            localPosition = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
+        
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(m_OwnCanvas.transform as RectTransform, localPosition,
+                m_OwnCanvas.worldCamera, out localPosition);
+        }
         
         if (targetCanvas.renderMode == RenderMode.WorldSpace)
         {
@@ -478,14 +493,14 @@ namespace Oultrox.UIExtensions
         Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(targetCanvas.worldCamera, target.position);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             m_OwnCanvas.transform as RectTransform, screenPos, m_OwnCanvas.worldCamera, out Vector2 localPos);
+        
+        unmaskRectTransform.localPosition = localPos;
 
         // Set sizeDelta based on the target's rect and the relative scale factors
         unmaskRectTransform.sizeDelta = new Vector2(
             targetSizeDelta.x / (ownCanvasScaleFactor / targetCanvasScaleFactor),
             targetSizeDelta.y / (ownCanvasScaleFactor / targetCanvasScaleFactor)
         );
-
-        unmaskRectTransform.localPosition = localPos;
 
         unmaskRectTransform.sizeDelta += sizeOffset; // Apply size offset
         unmaskRectTransform.anchorMax = unmaskRectTransform.anchorMin = target.pivot;
