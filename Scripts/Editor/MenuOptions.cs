@@ -20,7 +20,7 @@ namespace Oultrox.UIExtensions.Editors
 
             var unmaskedPanel = CreateUnmaskedPanel(AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"), Image.Type.Sliced);
             var unmask = unmaskedPanel.GetComponentInChildren<Unmask>();
-            unmask.SameSceneFitTargetName = button.name;
+            unmask.SameSceneFitTarget = button.GetComponent<RectTransform>();
             unmask.fitOnLateUpdate = true;
 
             Selection.activeGameObject = button.gameObject;
@@ -31,6 +31,9 @@ namespace Oultrox.UIExtensions.Editors
         {
             var unmaskedPanel = CreateUnmaskedPanel(AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"), Image.Type.Simple);
             unmaskedPanel.name = "Iris Shot";
+            var unmask = unmaskedPanel.GetComponentInChildren<Unmask>();
+            unmask.UnmaskMode = UnmaskMode.Nothing;
+            
             Selection.activeGameObject = unmaskedPanel;
         }
 

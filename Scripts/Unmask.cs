@@ -7,13 +7,20 @@ using UnityEngine.UI;
 
 namespace Oultrox.UIExtensions
 {
+    public enum UnmaskMode
+    {
+        SameScene,
+        CrossSceneCanvas,
+        CrossSceneNonCanvas,
+        Nothing
+    }
+    
     /// <summary>
     /// Reverse masking for parent Mask component. Based on Coffee.UnMask solution.
     /// </summary>
     [ExecuteInEditMode]
     [AddComponentMenu("UI/Unmask/Unmask", 1)]
     public class Unmask : MonoBehaviour, IMaterialModifier
-
     {
     //################################
     // Constant or Static Members.
@@ -23,14 +30,14 @@ namespace Oultrox.UIExtensions
     CanvasScaler m_OwnCanvasScaler;
 
     //################################
-    // Serialize Members.
+    // Serialized Members.
     //################################
-    
-    [FormerlySerializedAs("m_FitTarget")]
-    [Header("Same Scene Canvas Target Fit (Choose 1 Fit style)")]
-    [Tooltip("Name of the (UNIQUE) GameObject to fit the graphic's transform to.")]
+    [Header("Mode Selection")]
+    [SerializeField] private UnmaskMode m_Mode = UnmaskMode.SameScene;
+
+    [Header("Same Scene Target (Direct Reference)")]
     [SerializeField]
-    private string m_SameSceneFitTargetName;
+    private RectTransform m_SameSceneTarget;
     
     [Header("Fit Canvas Target Via Cross Scene Feature (Choose 1 Fit style)")]
     [Tooltip(
@@ -105,30 +112,23 @@ namespace Oultrox.UIExtensions
     /// <summary>
     /// Fit graphic's transform to target transform.
     /// </summary>
-    public string SameSceneFitTargetName
+    public RectTransform SameSceneFitTarget
     {
-        get { return m_SameSceneFitTargetName; }
+        get { return m_SameSceneTarget; }
         set
         {
-            m_SameSceneFitTargetName = value;
-            FitTo(m_SameSceneFitTargetName);
+            m_SameSceneTarget = value;
+            FitTo(m_SameSceneTarget);
         }
     }
 
     /// <summary>
-    /// Name of the object to fit the graphic's transform to.
+    /// Fit graphic's transform to target transform.
     /// </summary>
-    public string fitTargetName
+    public UnmaskMode UnmaskMode
     {
-        get { return m_FitTargetName; }
-        set
-        {
-            m_FitTargetName = value;
-            if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
-            {
-                FitTo(m_FitTargetCanvasName, m_FitTargetName);
-            }
-        }
+        get => m_Mode;
+        set => m_Mode = value;
     }
 
     /// <summary>
@@ -298,7 +298,7 @@ namespace Oultrox.UIExtensions
     /// <param name="targetName">Name of the target object which can be inside the target.</param>
     public void FitTo(string canvasName, string targetName)
     {
-        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitNonCanvasTargetName) && !string.IsNullOrEmpty(m_FitNonCanvasTargetCameraName)))
+        if (!string.IsNullOrEmpty(m_FitNonCanvasTargetName) && !string.IsNullOrEmpty(m_FitNonCanvasTargetCameraName))
         {
             if (!m_isDebugMode) return;
             Debug.LogWarning("Another Fit already set.");
@@ -360,6 +360,34 @@ namespace Oultrox.UIExtensions
         ConvertRelativeDimensionSize(targetCanvas, rt, m_UnmaskRectTransform);
     }
     
+    public void FitTo(RectTransform target)
+    {
+        if (target == null) return;
+
+        var rt = transform as RectTransform;
+        var anchorsAndPivotVector = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = anchorsAndPivotVector;
+        rt.anchorMin = anchorsAndPivotVector;
+        rt.pivot = anchorsAndPivotVector;
+
+        if (m_FitPosition)
+        {
+            rt.pivot = target.pivot;
+            Vector3 unmaskPosition = target.position + (Vector3)positionOffset;
+            rt.position = unmaskPosition;
+            rt.rotation = target.rotation;
+        }
+
+        if (m_FitSize)
+        {
+            var s1 = target.lossyScale;
+            var s2 = rt.parent.lossyScale;
+            rt.localScale = new Vector3(s1.x / s2.x, s1.y / s2.y, s1.z / s2.z);
+            rt.sizeDelta = target.rect.size + sizeOffset;
+            rt.anchorMax = rt.anchorMin = s_Center;
+        }
+    }
+    
     /// <summary>
     /// Fit Unmask cutout to non-canvas GameObject in another scene
     /// </summary>
@@ -367,7 +395,7 @@ namespace Oultrox.UIExtensions
     /// <param name="cameraGameObjectName"> String name of Main Camera GameObject in other scene</param>
     public void FitTo3DObject(string targetGameObjectName, string cameraGameObjectName)
     {
-        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)))
+        if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
         {
             if (!m_isDebugMode) return;
             Debug.LogWarning("Another Fit already set.");
@@ -581,20 +609,23 @@ namespace Oultrox.UIExtensions
     /// </summary>
     private void OnEnable()
     {
-        // Search for the nearest Canvas component in the parent hierarchy
         m_OwnCanvas = transform.GetComponentInParent<Canvas>();
         m_OwnCanvasScaler = m_OwnCanvas?.GetComponent<CanvasScaler>();
-        if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
+
+        switch (m_Mode)
         {
-            FitTo(m_SameSceneFitTargetName);
-        }
-        else if (!string.IsNullOrEmpty(m_FitTargetName))
-        {
-            FitTo(m_FitTargetCanvasName, m_FitTargetName);
-        }
-        else if (!string.IsNullOrEmpty(m_FitNonCanvasTargetName))
-        {
-            FitTo3DObject(m_FitNonCanvasTargetName, m_FitNonCanvasTargetCameraName);
+            case UnmaskMode.SameScene:
+                if (m_SameSceneTarget != null)
+                    FitTo(m_SameSceneTarget);
+                break;
+
+            case UnmaskMode.CrossSceneCanvas:
+                FitTo(m_FitTargetCanvasName, m_FitTargetName);
+                break;
+
+            case UnmaskMode.CrossSceneNonCanvas:
+                FitTo3DObject(m_FitNonCanvasTargetName, m_FitNonCanvasTargetCameraName);
+                break;
         }
 
         SetDirty();
@@ -620,6 +651,8 @@ namespace Oultrox.UIExtensions
 
         SetDirty();
     }
+    
+    
 
     /// <summary>
     /// LateUpdate is called every frame, if the Behaviour is enabled.
@@ -627,28 +660,41 @@ namespace Oultrox.UIExtensions
     private void LateUpdate()
     {
 #if UNITY_EDITOR
-        if ((!string.IsNullOrEmpty(m_SameSceneFitTargetName) || (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName)) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName)) 
+        // Run in editor if either:
+        // - FitOnLateUpdate is true, OR
+        // - Not playing (so you can preview changes)
+        if ((m_Mode == UnmaskMode.SameScene && m_SameSceneTarget != null
+             || m_Mode == UnmaskMode.CrossSceneCanvas && !string.IsNullOrEmpty(m_FitTargetCanvasName) && !string.IsNullOrEmpty(m_FitTargetName)
+             || m_Mode == UnmaskMode.CrossSceneNonCanvas && !string.IsNullOrEmpty(m_FitNonCanvasTargetName))
             && (m_FitOnLateUpdate || !Application.isPlaying))
 #else
-			if ((!string.IsNullOrEmpty(m_SameSceneFitTargetName) || !string.IsNullOrEmpty(m_FitTargetName) || !string.IsNullOrEmpty(m_FitNonCanvasTargetName)) && m_FitOnLateUpdate)
+    // Runtime-only version (no !Application.isPlaying check)
+    if ((m_Mode == UnmaskMode.SameScene && m_SameSceneTarget != null
+        || m_Mode == UnmaskMode.CrossSceneCanvas && !string.IsNullOrEmpty(m_FitTargetCanvasName) && !string.IsNullOrEmpty(m_FitTargetName)
+        || m_Mode == UnmaskMode.CrossSceneNonCanvas && !string.IsNullOrEmpty(m_FitNonCanvasTargetName))
+        && m_FitOnLateUpdate)
 #endif
         {
-            if (!string.IsNullOrEmpty(m_SameSceneFitTargetName))
+            switch (m_Mode)
             {
-                FitTo(m_SameSceneFitTargetName);
-            }
-            else if (!string.IsNullOrEmpty(m_FitTargetName) && !string.IsNullOrEmpty(m_FitTargetCanvasName))
-            {
-                FitTo(m_FitTargetCanvasName, m_FitTargetName);
-            }
-            else if (!string.IsNullOrEmpty(m_FitNonCanvasTargetName))
-            {
-                FitTo3DObject(m_FitNonCanvasTargetName, m_FitNonCanvasTargetCameraName);
+                case UnmaskMode.SameScene:
+                    if (m_SameSceneTarget != null)
+                        FitTo(m_SameSceneTarget);
+                    break;
+
+                case UnmaskMode.CrossSceneCanvas:
+                    FitTo(m_FitTargetCanvasName, m_FitTargetName);
+                    break;
+
+                case UnmaskMode.CrossSceneNonCanvas:
+                    FitTo3DObject(m_FitNonCanvasTargetName, m_FitNonCanvasTargetCameraName);
+                    break;
             }
         }
 
         Smoothing(graphic, m_EdgeSmoothing);
     }
+
 
 #if UNITY_EDITOR
     /// <summary>
